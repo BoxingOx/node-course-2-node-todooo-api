@@ -14,8 +14,8 @@ app.post('/todos', (req, res) => {
     text: req.body.text
   });// end todo object
 
-  todo.save().then((doc) => {
-    res.send(doc);
+  todo.save().then((doc) => {  // save to db. e can then send the doc to the server (save returns doc
+    res.send(doc);             // we can then use response object to send ) to see it, we can see this reponse in postman
   }, (e) => {
     res.status(400).send(e);
   });// end then callback with 2 parameters
@@ -24,3 +24,6 @@ app.post('/todos', (req, res) => {
 app.listen(3000, () => {
   console.log('Started on port 3000');
 });
+
+module.exports = {app};
+//module.exports.app = app;   // in requiring file call app.app
