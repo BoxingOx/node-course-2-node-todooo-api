@@ -32,20 +32,21 @@ app.get('/todos', (req, res) => {
 app.get('/todos/:id', (req, res) => {
   var id = req.params.id;
 
-  if (!ObjectID.isValid(id)) {
-    return res.status(404).send();
-  }
+  if (!ObjectID.isValid(id)) // ObjectID is a mongoose object and isValid is its built-in method
+    return res.status(404).send();// invalid id
 
-  Todo.findById(id).then((todo) => {
-    if (!todo) {
+
+  Todo.findById(id).then((todo) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
+    if (!todo)
       return res.status(404).send();
-    }
 
+    // else
     res.send({todo});
-  }).catch((e) => {
+  }).catch((e) => { // there could be other errors besides the id
     res.status(400).send();
   });
-});
+}// end fxn parameter
+);
 
 app.listen(3000, () => {
   console.log('Started on port 3000');
