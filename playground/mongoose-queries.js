@@ -33,7 +33,6 @@ User.findById('5b704c484d697b1268b2d1d0').then((user) => {
   if (!user) {
     return console.log('Unable to find user');
   }
-
   console.log(JSON.stringify(user, undefined, 2));
 }, (e) => {
   console.log(e);

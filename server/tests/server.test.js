@@ -1,14 +1,18 @@
 const expectt = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');  // local files loaded in from module.exports we dont need to trquire (server.js).app with destructuring
 const {Todo} = require('./../models/todo');
 
-const todos = [{
-  text: 'First test todo'
-}, {
-  text: 'Second test todo'
-}];
+  const todos = [{
+    _id: new ObjectID(),
+    text: 'First test todo'
+  }, {
+    _id: new ObjectID(),
+    text: 'Second test todo'
+  }];
+
 
 beforeEach((done) =>{       // Testing lifecycle method. database empty each time
   Todo.remove({}).then(() => {
@@ -24,7 +28,7 @@ describe('POST/todos', () => {
      .send({text})
      .expect(200)
      .expect((res) =>{
-       expectt(res.body.text).toBe(text); // is it equal to the sent JSON text above? rhetorical
+       expectt(res.body.text).toBe(text); // is it equal to the sent JSON text above? rhetorical   Is the reponse the same as the variable text?
      })
       .end((err, res)=>{
         if(err)
@@ -45,8 +49,8 @@ describe('POST/todos', () => {
   it('should not create todo with invalid body data', (done) => {
       request(app)
         .post('/todos')
-        .send({})
-        .expect(400)
+        .send({})   // send  nothing to server
+        .expect(400) // expect an error code of 400
         .end((err, res)=>{
           if(err)
           return done(err);
@@ -65,8 +69,50 @@ describe('GET /todos', () => {
       .get('/todos')
       .expect(200)
       .expect((res) => {
-        expect(res.body.todos.length).toBe(2);
+        expectt(res.body.todos.length).toBe(2); // hthat is if there are only 2 todos
       })
       .end(done);
   });
 });
+
+describe('GET /todos/:id', () => {
+
+
+  it('should return 404 if todo not found', (done) => {
+
+    var hexId = new ObjectID().toHexString(); // some random new id
+    // console.log(` OBJECTID   IS   ${hexId}`);
+    request(app)
+      .get(`/todos/${hexId}`)
+      .expect(404)
+      .end(done);
+
+  });
+
+    it('should return todo doc', (done) => {
+
+      // console.log(`TODOS ID IS ${todos[0]._id}`);  // undefined
+        // var HexId2 = todos[0]._id.toHexString();
+        // 5555
+       // 5b76d8183de0420d0c092e0c
+       // var hex = 5b76d8183de0420d0c092e0c;
+
+      request(app)
+      .get(`/todos/${todos[0]._id.toHexString()}`)
+      .expect(200)
+      .expect((res) => {
+        expectt(res.body.tod.text).toBe(todos[0].text) // we look at 1st doc in array look at response text vs text in db
+        })
+          .end(done);
+      });
+
+
+
+    it('should return 404 for non-object ids', (done) => {
+      request(app)
+        .get('/todos/123abc')
+        .expect(404)
+        .end(done);
+      });
+
+  });
