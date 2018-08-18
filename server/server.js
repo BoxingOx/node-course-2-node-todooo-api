@@ -31,24 +31,44 @@ app.get('/todos', (req, res) => {
   });
 });
 
-app.get('/todos/:id', (req, res) => {
-  var id = req.params.id;             // our input for a search request based on parameters
+  app.get('/todos/:id', (req, res) => {
+    var id = req.params.id;             // our input for a search request based on parameters
 
-  if (!ObjectID.isValid(id)){ // ObjectID is a mongoose object and isValid is its built-in method
-    return res.status(404).send();// invalid id
-}
+    if (!ObjectID.isValid(id)) // ObjectID is a mongoose object and isValid is its built-in method
+      return res.status(404).send();// invalid id finish scope fxn early
 
-  Todo.findById(id).then((tod) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
-    if (!tod){
-      return res.status(404).send();
-    }
-    // else
-    res.send({tod});
-  }).catch((e) => { // there could be other errors besides the id
-    res.status(400).send();
-  });
-}// end fxn parameter
-);
+
+    Todo.findById(id).then((tod) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
+      if (!tod)
+        return res.status(404).send();  // finish early
+
+      // else
+      res.send({tod});
+    }).catch((e) => { // there could be other errors besides the id
+      res.status(400).send();
+    });
+  }// end fxn parameter
+);// end get todos/:id call
+
+app.delete('/todos/:id', (req, res) => {
+
+  var id = req.params.id;
+
+  if (!ObjectID.isValid(id))
+    return res.status(404).send();
+
+
+    Todo.findByIdAndRemove(id).then((tod) => {
+
+      if (!tod)
+        return res.status(404).send();
+
+          res.send(tod);
+
+    }).catch((e) => {
+      res.status(400).send();  //malformed
+    });
+});// end delete call
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);

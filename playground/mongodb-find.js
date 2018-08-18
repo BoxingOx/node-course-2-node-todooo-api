@@ -5,7 +5,7 @@ const url = 'mongodb://localhost:27017';
 
 const dbName = 'TodoApp';
 
-MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, client) => {
+MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, client) => {  // current version of connecting
   if (err) {
     return console.log('Unable to connect to MongoDB server');
   }
