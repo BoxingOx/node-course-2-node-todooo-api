@@ -63,11 +63,11 @@ app.delete('/todos/:id', (req, res) => {
       if (!tod)
         return res.status(404).send();
 
-          res.send(tod);
+          res.send({tod});   // you forgot to send object use es6 syntav {tod}, that is why test fails
 
     }).catch((e) => {
       res.status(400).send();  //malformed
-    });
+    });// end findByIdAndRemove
 });// end delete call
 
 app.listen(port, () => {
