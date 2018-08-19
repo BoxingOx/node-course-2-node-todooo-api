@@ -1,3 +1,4 @@
+const _ = require('lodash');
 var express = require('express');
 var bodyParser = require('body-parser');
 var {ObjectID} = require('mongodb');
@@ -38,12 +39,13 @@ app.get('/todos', (req, res) => {
       return res.status(404).send();// invalid id finish scope fxn early
 
 
-    Todo.findById(id).then((tod) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
-      if (!tod)
+    Todo.findById(id).then((todo) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
+      if (!todo)
         return res.status(404).send();  // finish early
 
       // else
-      res.send({tod});
+      console.log("Get One works");
+      res.send({todo});
     }).catch((e) => { // there could be other errors besides the id
       res.status(400).send();
     });
@@ -67,8 +69,41 @@ app.delete('/todos/:id', (req, res) => {
 
     }).catch((e) => {
       res.status(400).send();  //malformed
-    });// end findByIdAndRemove
+    });// end then call changed onto  findByIdAndRemove
 });// end delete call
+
+
+app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
+
+    var id = req.params.id; // get the id
+    var body = _.pick(req.body, ['text', 'completed']); // we should not be allowed to update some attribute stuff not specified like completedAt. We dont want a default upgrade without altering these 2 ifone  in the mongoose model
+
+    if (!ObjectID.isValid(id)){
+      console.log('Apparently id is invalid');
+      return res.status(404).send();
+    }// end if statement
+
+    if(_.isBoolean(body.completed) && body.completed){ // if boolean and true...
+    body.completedAt  = new Date().getTime();// time since 1970 jan 1st ??
+      }
+    else{
+    body.completed = false;
+    body.completedAt = null;
+    }// end else
+
+    Todo.findByIdAndUpdate(id,{$set: body}, {new: true}).then((tod) => {
+
+      if (!tod){
+          console.log(`Apparently there is no tod. Value of tod: ${tod}`);
+        return res.status(404).send();
+      }// end if statement
+
+          res.send({tod});
+    }).catch((e) => {
+      res.status(400).send();
+    });// end then call chained onto Todo.findByIdAndUpdate
+
+});// end app.patch for updates
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
