@@ -76,6 +76,8 @@ app.delete('/todos/:id', (req, res) => {
 app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
 
     var id = req.params.id; // get the id
+
+    //The input request sent to server
     var body = _.pick(req.body, ['text', 'completed']); // we should not be allowed to update some attribute stuff not specified like completedAt. We dont want a default upgrade without altering these 2 ifone  in the mongoose model
 
     if (!ObjectID.isValid(id)){

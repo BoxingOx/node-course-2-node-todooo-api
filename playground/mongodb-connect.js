@@ -8,7 +8,7 @@ const url = 'mongodb://localhost:27017';
 
 const dbName = 'TodoApp';
 
-MongoClient.connect(url, (err, client) => {
+MongoClient.connect(url,{ useNewUrlParser: true }, (err, client) => { // this will supposedluy change as well- its currently deprecated!!
   if (err) {
     return console.log('Unable to connect to MongoDB server');
   }
