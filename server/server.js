@@ -8,6 +8,7 @@ const {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
+var {authenticate} = require('./middleware/authenticate')
 
 var app = express();
 const port = process.env.PORT;
@@ -25,7 +26,6 @@ app.post('/todos', (req, res) => {
     res.status(400).send(e); // many params set in ORM todo.js, error if these arent met
   });// end then callback with 2 parameters
 });  // end App POST /todos
-
 
 app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
@@ -94,19 +94,23 @@ app.post('/users', (req, res) => {
  var body = _.pick(req.body, ['email', 'password'])
  var user = new User(body);
  user.save().then(() => {
-   return user.generateAuthToken(); // seems to work without return preceding it
+  return  user.generateAuthToken(); // seems to work without return preceding it
    //res.send(doc);
- }).then((toke) =>{
-   res.header('x-auth', toke).send(user);
+ }).then((token) =>{
+   res.header('x-auth', token).send(user);
  }).catch((e) =>{
      res.status(400).send(e);
   })// end catch on then call
 });// end app POST USERS
 
+app.get('/users/me', authenticate, (req, res) =>{
+  res.send(req.user);
+});// end app GET users
+
+
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
 });// end app.listen
-
 module.exports = {app};
 //module.exports.app = app;   // in requiring file call app.app
