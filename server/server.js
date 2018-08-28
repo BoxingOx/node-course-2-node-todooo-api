@@ -1,9 +1,9 @@
 require('./config/config');
 
 const _ = require('lodash');
-var express = require('express');
-var bodyParser = require('body-parser');
-var {ObjectID} = require('mongodb');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
@@ -14,61 +14,53 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
+
 app.post('/todos', (req, res) => {
   var todo = new Todo({
     text: req.body.text   // new doc in post with text being set to a specific value
   });// end todo object
-
-  todo.save().then((doc) => {  // save to db. e can then send the doc to the server (save returns doc
+  todo.save().then((doc) => {  // save var todo to db. e can then send the doc to the server (save returns doc
     res.send(doc);             // we can then use response object to send ) to see it, we can see this reponse in postman  // if 200 it sent
   }, (e) => {
     res.status(400).send(e); // many params set in ORM todo.js, error if these arent met
   });// end then callback with 2 parameters
-});
+});  // end App POST /todos
+
 
 app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
     res.send({todos});      // send docs to server, the reponnse
   }, (e) => {
     res.status(400).send(e);
-  });
-});
-
-  app.get('/todos/:id', (req, res) => {
-    var id = req.params.id;             // our input for a search request based on parameters
-
-    if (!ObjectID.isValid(id)) // ObjectID is a mongoose object and isValid is its built-in method
-      return res.status(404).send();// invalid id finish scope fxn early
+  });// end then callback with 2 fxns
+});// end app GET /todos
 
 
-    Todo.findById(id).then((todo) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
-      if (!todo)
-        return res.status(404).send();  // finish early
+app.get('/todos/:id', (req, res) => { // error was todo in server.js vs tod in server.test.js
+  var id = req.params.id;             // our input for a search request based on parameters
+  if (!ObjectID.isValid(id)) // ObjectID is a mongoose object and isValid is its built-in method
+    return res.status(404).send();// invalid id finish scope fxn early
+  Todo.findById(id).then((tod) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
+    if (!tod)
+      return res.status(404).send();  // finish early
+    // else
+    console.log("Get One works");
+    res.send({tod});
+  }).catch((e) => { // there could be other errors besides the id
+    res.status(400).send();
+  });// end catch chained onto then
+});// end get todos/:id call
 
-      // else
-      console.log("Get One works");
-      res.send({todo});
-    }).catch((e) => { // there could be other errors besides the id
-      res.status(400).send();
-    });
-  }// end fxn parameter
-);// end get todos/:id call
+
 
 app.delete('/todos/:id', (req, res) => {
-
   var id = req.params.id;
-
   if (!ObjectID.isValid(id))
     return res.status(404).send();
-
-
     Todo.findByIdAndRemove(id).then((tod) => {
-
       if (!tod)
         return res.status(404).send();
-
           res.send({tod});   // you forgot to send object use es6 syntav {tod}, that is why test fails
-
     }).catch((e) => {
       res.status(400).send();  //malformed
     });// end then call changed onto  findByIdAndRemove
@@ -76,42 +68,45 @@ app.delete('/todos/:id', (req, res) => {
 
 
 app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
-
     var id = req.params.id; // get the id
-
     //The input request sent to server
-    var body = _.pick(req.body, ['text', 'completed']); // we should not be allowed to update some attribute stuff not specified like completedAt. We dont want a default upgrade without altering these 2 ifone  in the mongoose model
-
-    if (!ObjectID.isValid(id)){
-      console.log('Apparently id is invalid');
+    //https://lodash.com/docs/4.17.10#pick    // We can only explicitly interact with text and completed
+    var body = _.pick(req.body, ['text', 'completed']); // we should not be allowed to explicitly update some attribute stuff not specified like completedAt. We dont want a default upgrade without altering these 2 ifone  in the mongoose model
+    if (!ObjectID.isValid(id))
       return res.status(404).send();
-    }// end if statement
-
-    if(_.isBoolean(body.completed) && body.completed){ // if boolean and true...
+    if(_.isBoolean(body.completed) && body.completed) // if boolean and true( what we will send)...
     body.completedAt  = new Date().getTime();// time since 1970 jan 1st ??
-      }
     else{
     body.completed = false;
     body.completedAt = null;
-    }// end else
-
+        }// end else  Now we Actually update the value below...
     Todo.findByIdAndUpdate(id,{$set: body}, {new: true}).then((tod) => {
-
-      if (!tod){
-          console.log(`Apparently there is no tod. Value of tod: ${tod}`);
+      if (!tod)
         return res.status(404).send();
-      }// end if statement
-
           res.send({tod});
-    }).catch((e) => {
+   }).catch((e) => {
       res.status(400).send();
-    });// end then call chained onto Todo.findByIdAndUpdate
-
+   });// end then call chained onto Todo.findByIdAndUpdate
 });// end app.patch for updates
+
+
+app.post('/users', (req, res) => {
+ var body = _.pick(req.body, ['email', 'password'])
+ var user = new User(body);
+ user.save().then(() => {
+   return user.generateAuthToken(); // seems to work without return preceding it
+   //res.send(doc);
+ }).then((toke) =>{
+   res.header('x-auth', toke).send(user);
+ }).catch((e) =>{
+     res.status(400).send(e);
+  })// end catch on then call
+});// end app POST USERS
+
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
-});
+});// end app.listen
 
 module.exports = {app};
 //module.exports.app = app;   // in requiring file call app.app

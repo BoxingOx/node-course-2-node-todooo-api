@@ -25,7 +25,8 @@ beforeEach((done) =>{       // Testing lifecycle method. database empty each tim
 
 describe('POST/todos', () => {
  it('should create a new todo', (done) =>{
-   var text = 'Test todo text';
+  var text = 'Test todo text';
+
      request(app)
      .post('/todos')
      .send({text})
@@ -44,7 +45,6 @@ describe('POST/todos', () => {
       });//end end chain
  });// It 1 End Describe 1
 
-
   it('should not create todo with invalid body data', (done) => {
       request(app)
         .post('/todos')
@@ -61,6 +61,7 @@ describe('POST/todos', () => {
   }); // It 2 End Describe 1
 });// End Describe 1
 
+
 describe('GET /todos', () => {
   it('should get all todos', (done) => {
     request(app)
@@ -72,6 +73,7 @@ describe('GET /todos', () => {
       .end(done); // end end call
   }); // end It 1 Describe 2
 });  // end Describe 2
+
 
 describe('GET /todos/:id', () => {
   it('should return 404 if todo not found', (done) => {
@@ -170,12 +172,9 @@ describe('PATCH /todo/:id', () =>{
           .end(done);
  });// end It 1 Describe 5
 
-
  it('should clear completedAt when todo isnt completed', (done) => {
-
    var hexId = todos[1]._id.toHexString();
      var text = 'Testing Text 2';
-
    request(app)
      .patch(`/todos/${hexId}`)
      .send({completed: false,
@@ -189,6 +188,4 @@ describe('PATCH /todo/:id', () =>{
    })
    .end(done);
  });// end it 2
-
-
 });// end describe 5
