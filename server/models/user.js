@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs')
 
 var UserSchema = new mongoose.Schema({  // schema may not exist or something, we need this schema property to tac on custom methods comming up...
   email: {
@@ -50,23 +51,38 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
 }; // end tagged on method generateAuthToken that has been heavily tweaked
 
 
-UserSchema.statics.findByToken = function (token) { // we access statics 'stead  of methods although methods added here are model methods as opposed to instance methods
-   var User = this;
-   var decoded;
-   try {
-     decoded = jwt.verify(token, 'abc123'); // the token to decode and the secrect
-   } catch (e) {
-     // return new Promise((resolve,reject) =>{
-     //   reject();  // will be noticed by send call back in server.js
-     // })// end promise object
-     return Promise.reject();
-   } // end catch
-   return User.findOne({  // still works without preceding return keyword NOPE- GET DOESNT work without it
-     _id: decoded._id,
-     'tokens.token' : token,
-     'tokens.access' : 'auth',
-   });// end findOne
-};// end method findByToken
+  UserSchema.statics.findByToken = function (token) { // we access statics 'stead  of methods although methods added here are model methods as opposed to instance methods
+     var User = this;
+     var decoded;
+     try {
+       decoded = jwt.verify(token, 'abc123'); // the token to decode and the secrect
+     } catch (e) {
+       // return new Promise((resolve,reject) =>{
+       //   reject();  // will be noticed by send call back in server.js
+       // })// end promise object
+       return Promise.reject();
+     } // end catch
+     return User.findOne({  // still works without preceding return keyword NOPE- GET DOESNT work without it
+       _id: decoded._id,
+       'tokens.token' : token,
+       'tokens.access' : 'auth',
+     });// end findOne
+  };// end method findByToken
+
+
+  UserSchema.pre('save', function(next){
+    var user = this;
+    if(user.isModified('password'))
+      bcrypt.genSalt(10, (err, salt) =>{
+        bcrypt.hash(user.password, salt, (err, hash) =>{
+          user.password = hash;  // the password is encrypte and can be stored as it is in the database. We will need a decrypting fxn called compare
+          next();
+        })// end hash
+      });// end genSalt
+    else
+      next();
+   });// end pre fxn
+
 
 var User = mongoose.model('User',UserSchema);// end  model object // the custom methods are in UserSchema.methods property
 
