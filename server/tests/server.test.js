@@ -4,47 +4,35 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');  // local files loaded in from module.exports we dont need to trquire (server.js).app with destructuring
 const {Todo} = require('./../models/todo');
-
-  const todos = [{
-    _id: new ObjectID(),
-    text: 'First test todo'
-  }, {
-    _id: new ObjectID(),
-    text: 'Second test todo',
-    completed : true,
-    completedAt : 333
-  }];  // end  objects to be loaded in
+const {User} = require('./../models/user');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
 
+beforeEach(populateUsers); // end  insert objects loading in
+beforeEach(populateTodos); // end  insert objects loading in
 
-beforeEach((done) =>{       // Testing lifecycle method. database empty each time
-  Todo.remove({}).then(() => {
-    return Todo.insertMany(todos);
-  }).then(() => done());  // done first only then can program move on to test cases
-}); // end  insert objects loading in
+// describe('POST/todos', () => {
+//  it('should create a new todo', (done) =>{
+//   var text = 'Test todo text';
+//      request(app)
+//      .post('/todos')
+//      .send({text})
+//      .expect(200)
+//      .expect((res) =>{
+//        expectt(res.body.text).toBe(text); // is it equal to the sent JSON text above? rhetorical   Is the reponse the same as the variable text?
+//      })// end assertion of response
+//       .end((err, res)=>{
+//         if(err)
+//         return done(err);  // failed test case  failure was passed on from expect whhere it was not thrown. error rethrown here
+//         Todo.find({text}).then((todos) =>{  // find returns an array?
+//           expectt(todos.length).toBe(1);
+//           expectt(todos[0].text).toBe(text);
+//           done
+//         }).catch((e) => done(e));        //   If for some reason an error occurs within find, make sure the test then fails
+//       })//end end chain
+//  });// It 1 End Describe 1
 
-describe('POST/todos', () => {
- it('should create a new todo', (done) =>{
-  var text = 'Test todo text';
-
-     request(app)
-     .post('/todos')
-     .send({text})
-     .expect(200)
-     .expect((res) =>{
-       expectt(res.body.text).toBe(text); // is it equal to the sent JSON text above? rhetorical   Is the reponse the same as the variable text?
-     })// end assertion of response
-      .end((err, res)=>{
-        if(err)
-        return done(err);  // failed test case  failure was passed on from expect whhere it was not thrown. error rethrown here
-        Todo.find({text}).then((todos) =>{  // find returns an array?
-          expectt(todos.length).toBe(1);
-          expectt(todos[0].text).toBe(text);
-          done();
-        }).catch((e) => done(e));        //   If for some reason an error occurs within find, make sure the test then fails
-      });//end end chain
- });// It 1 End Describe 1
-
+  describe('POST/todos', () => { // be careful with this line
   it('should not create todo with invalid body data', (done) => {
       request(app)
         .post('/todos')
@@ -55,9 +43,9 @@ describe('POST/todos', () => {
           return done(err);
           Todo.find().then((todos) => {
             expectt(todos.length).toBe(2);
-            done();
+            done
         }).catch((e) => done(e));  // end Todo.find
-    }); // end end call
+    }) // end end call
   }); // It 2 End Describe 1
 });// End Describe 1
 
@@ -189,3 +177,75 @@ describe('PATCH /todo/:id', () =>{
    .end(done);
  });// end it 2
 });// end describe 5
+
+
+ describe('GET /users/me',() =>{
+   it('should return user if authenticated', (done) =>{
+     request(app)
+     .get('/users/me')
+     .set('x-auth', users[0].tokens[0].token)// the 1st token
+     .expect(200)
+     .expect((res) => {
+       expectt(res.body._id).toBe(users[0]._id.toHexString());
+       expectt(res.body.email).toBe(users[0].email)
+       })
+     .end(done);
+   });// end it 1
+
+   it('should return 404r if not authenticated', (done) =>{
+     request(app)
+       .get('/users/me')
+       .expect(401)
+       .expect((res) => {
+         expectt(res.body).toEqual({}); // we expect the body to be empty
+       })
+       .end(done);
+   });// end it 2
+ }); // end describe 6
+
+
+ describe('POST /users', () => {
+  it('should create a user', (done) => {
+    var email = 'example2@toBeorNotToBEEE34d.com';
+    var password = '1234mnbee!';
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(200)
+      .expect((res) =>{
+        // expectt(res.headers['x-auth']).toExist();
+        // expectt(res.body._id).toExist();
+        expectt(res.body.email).toBe(email);
+      })
+      .end((err) => {
+        if(err)
+          return done(err);
+        User.findOne({email}).then((users) =>{
+          // expectt(user).toExist();
+          // expectt(users.password).toNotBe(password);
+          done();
+      });// end then call on findOne
+    }); // end end call
+   });// end it 1
+
+
+  it('hould return validation errors if request invalid', (done) => {
+    var email = 'and';
+    var password = '123';
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(400)
+      .end(done);
+   });// end it 2
+
+  it('should not create user if email in use', (done) => {
+    var email = users[0].email;
+    var password = 'Password123!';
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(400)
+      .end(done);
+   });// end it 3
+ });// end describe 7

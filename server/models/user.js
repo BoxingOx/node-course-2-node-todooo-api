@@ -40,7 +40,7 @@ UserSchema.methods.toJSON = function(){           //we modified this toJSON meth
 }; // end tagged on altered method
 
 UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthTokens method
-  var user = this;  // identifier
+  var user = this;  // identifier , the object created in post calls this method to generate the authentication tokens
   var access = 'auth';
   var token = jwt.sign({_id: user._id.toHexString(), access},'abc123').toString(); // avc123 is the secrect
   user.tokens = user.tokens.concat([{access,token}]);
@@ -55,7 +55,7 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
      var User = this;
      var decoded;
      try {
-       decoded = jwt.verify(token, 'abc123'); // the token to decode and the secrect
+       decoded = jwt.verify(token, 'abc123'); // the token to decode and the secrect   // only jwt.verify and jwt. sign know about secrect
      } catch (e) {
        // return new Promise((resolve,reject) =>{
        //   reject();  // will be noticed by send call back in server.js
@@ -70,7 +70,7 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
   };// end method findByToken
 
 
-  UserSchema.pre('save', function(next){
+  UserSchema.pre('save', function(next){  // before save event, run this code...
     var user = this;
     if(user.isModified('password'))
       bcrypt.genSalt(10, (err, salt) =>{

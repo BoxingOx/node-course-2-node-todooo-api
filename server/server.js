@@ -20,7 +20,7 @@ app.post('/todos', (req, res) => {
   var todo = new Todo({
     text: req.body.text   // new doc in post with text being set to a specific value
   });// end todo object
-  todo.save().then((doc) => {  // save var todo to db. e can then send the doc to the server (save returns doc
+  todo.save().then((doc) => {  // save var todo 'ie the doc' to db. e can then send the doc to the server (save returns doc
     res.send(doc);             // we can then use response object to send ) to see it, we can see this reponse in postman  // if 200 it sent
   }, (e) => {
     res.status(400).send(e); // many params set in ORM todo.js, error if these arent met
@@ -29,7 +29,7 @@ app.post('/todos', (req, res) => {
 
 app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
-    res.send({todos});      // send docs to server, the reponnse
+    res.send({todos});      // send docs to server, the RESPONSE
   }, (e) => {
     res.status(400).send(e);
   });// end then callback with 2 fxns
@@ -72,9 +72,9 @@ app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no con
     //The input request sent to server
     //https://lodash.com/docs/4.17.10#pick    // We can only explicitly interact with text and completed
     var body = _.pick(req.body, ['text', 'completed']); // we should not be allowed to explicitly update some attribute stuff not specified like completedAt. We dont want a default upgrade without altering these 2 ifone  in the mongoose model
-    if (!ObjectID.isValid(id))
+    // if (!ObjectID.isValid(id))
       return res.status(404).send();
-    if(_.isBoolean(body.completed) && body.completed) // if boolean and true( what we will send)...
+    if(_.isBoolean(body.completed) && body.completed) // if boolean and TRUE( what we will send)...
     body.completedAt  = new Date().getTime();// time since 1970 jan 1st ??
     else{
     body.completed = false;
@@ -90,21 +90,22 @@ app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no con
 });// end app.patch for updates
 
 
+
 app.post('/users', (req, res) => {
- var body = _.pick(req.body, ['email', 'password'])
+ var body = _.pick(req.body, ['email', 'password']) // these are required fields
  var user = new User(body);
  user.save().then(() => {
   return  user.generateAuthToken(); // seems to work without return preceding it
    //res.send(doc);
- }).then((token) =>{
-   res.header('x-auth', token).send(user);
+ }).then((token) =>{  // the token generated from generateAuthToken and passed to it
+   res.header('x-auth', token).send(user); // key/value pair custom header name
  }).catch((e) =>{
      res.status(400).send(e);
   })// end catch on then call
 });// end app POST USERS
 
 app.get('/users/me', authenticate, (req, res) =>{
-  res.send(req.user);
+  res.send(req.user); // we altered req.users in aux method
 });// end app GET users
 
 
