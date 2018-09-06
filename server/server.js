@@ -35,7 +35,6 @@ app.get('/todos', (req, res) => {
   });// end then callback with 2 fxns
 });// end app GET /todos
 
-
 app.get('/todos/:id', (req, res) => { // error was todo in server.js vs tod in server.test.js
   var id = req.params.id;             // our input for a search request based on parameters
   if (!ObjectID.isValid(id)) // ObjectID is a mongoose object and isValid is its built-in method
@@ -51,8 +50,6 @@ app.get('/todos/:id', (req, res) => { // error was todo in server.js vs tod in s
   });// end catch chained onto then
 });// end get todos/:id call
 
-
-
 app.delete('/todos/:id', (req, res) => {
   var id = req.params.id;
   if (!ObjectID.isValid(id))
@@ -65,7 +62,6 @@ app.delete('/todos/:id', (req, res) => {
       res.status(400).send();  //malformed
     });// end then call changed onto  findByIdAndRemove
 });// end delete call
-
 
 app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
     var id = req.params.id; // get the id
@@ -91,27 +87,42 @@ app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no con
 
 
 
+  //USERS
+
 app.post('/users', (req, res) => {
  var body = _.pick(req.body, ['email', 'password']) // these are required fields
  var user = new User(body);
- user.save().then(() => {
-  return  user.generateAuthToken(); // seems to work without return preceding it
+ user.save().then(() => {  // save to db, before save, pre method hashes password
+  return  user.generateAuthToken(); // seems to work without return preceding it. After saved to db, a token based on id is quickily generated and saved to db
    //res.send(doc);
- }).then((token) =>{  // the token generated from generateAuthToken and passed to it
-   res.header('x-auth', token).send(user); // key/value pair custom header name
- }).catch((e) =>{
+  }).then((token) =>{  // the token generated from generateAuthToken and passed to then
+   res.header('x-auth', token).send(user); // key/value pair custom header name is sent to server to view
+  }).catch((e) =>{
      res.status(400).send(e);
   })// end catch on then call
 });// end app POST USERS
 
-app.get('/users/me', authenticate, (req, res) =>{
+// POST /users/login {email, password}
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+  // res.send(body);
+ User.findByCredentials(body.email, body.password).then((user) =>{ // user is returned doc
+   return user.generateAuthToken().then((token) => {
+     res.header('x-auth', token).send(user);
+   });// end genAuthToken call
+     }).catch((e) =>{
+       res.status(400).send();
+     });// end findByCredentials call and then its 'then' and 'catch' chain calls
+ });// end post to check login
+
+app.get('/users/me', authenticate, (req, res) =>{ // authenticate is called
   res.send(req.user); // we altered req.users in aux method
-});// end app GET users
+ });// end app GET users
 
 
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
-});// end app.listen
+ });// end app.listen
 module.exports = {app};
 //module.exports.app = app;   // in requiring file call app.app

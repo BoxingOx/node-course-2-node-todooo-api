@@ -179,6 +179,10 @@ describe('PATCH /todo/:id', () =>{
 });// end describe 5
 
 
+
+
+    //USERS
+
  describe('GET /users/me',() =>{
    it('should return user if authenticated', (done) =>{
      request(app)
@@ -227,7 +231,6 @@ describe('PATCH /todo/:id', () =>{
       });// end then call on findOne
     }); // end end call
    });// end it 1
-
 
   it('hould return validation errors if request invalid', (done) => {
     var email = 'and';

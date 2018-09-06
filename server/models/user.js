@@ -31,7 +31,10 @@ var UserSchema = new mongoose.Schema({  // schema may not exist or something, we
       required: true
     }// end token property of tokenS
   }]// end tokenS array with its inner object scope thing
-});// end Schema property and its object
+});// end SCHEMA PROPERTY and its object
+
+
+
 
 UserSchema.methods.toJSON = function(){           //we modified this toJSON method
   var user = this;  // identifier
@@ -51,6 +54,7 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
 }; // end tagged on method generateAuthToken that has been heavily tweaked
 
 
+
   UserSchema.statics.findByToken = function (token) { // we access statics 'stead  of methods although methods added here are model methods as opposed to instance methods
      var User = this;
      var decoded;
@@ -67,7 +71,25 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
        'tokens.token' : token,
        'tokens.access' : 'auth',
      });// end findOne
-  };// end method findByToken
+  };// end statics method findByToken
+
+  UserSchema.statics.findByCredentials = function (email, password){
+    var User = this;
+    return User.findOne({email}).then((user) => { // then call returns some document that represents a user
+
+      if (!user)
+       return Promise.reject();
+
+       return new Promise((resolve, reject) =>{ // call new promise as Bcrypt does not support promises
+         bcrypt.compare(password, user.password, (err, res) => {
+                    if(res)
+                    resolve(user);
+                    else
+                    reject();
+          });
+       });
+    })
+  }; // end statics method findByCredentials
 
 
   UserSchema.pre('save', function(next){  // before save event, run this code...
