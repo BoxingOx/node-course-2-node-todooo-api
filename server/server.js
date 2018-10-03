@@ -119,7 +119,13 @@ app.get('/users/me', authenticate, (req, res) =>{ // authenticate is called
   res.send(req.user); // we altered req.users in aux method
  });// end app GET users
 
-
+ app.delete('/users/me/token', authenticate, (req, res) =>{
+   req.user.removeToken(req.token).then(() =>{
+     res.status(200).send();
+   }, () =>{
+    res.status(400).send();
+  });
+ });
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);

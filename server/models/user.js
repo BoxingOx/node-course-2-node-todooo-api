@@ -53,6 +53,15 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
   });// end the this object to be returned back to server.js
 }; // end tagged on method generateAuthToken that has been heavily tweaked
 
+UserSchema.methods.removeToken = function (token){
+  var user = this;
+    return user.update({
+    $pull: {
+      tokens: {token}
+    }// end pull object and outer object
+  });
+};
+
 
 
   UserSchema.statics.findByToken = function (token) { // we access statics 'stead  of methods although methods added here are model methods as opposed to instance methods
@@ -86,8 +95,8 @@ UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthT
                     resolve(user);
                     else
                     reject();
-          });
-       });
+          });// end compare method
+       });// end newly returned promise
     })
   }; // end statics method findByCredentials
 
