@@ -16,9 +16,10 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 
 
-app.post('/todos', (req, res) => {
+app.post('/todos',authenticate, (req, res) => {
   var todo = new Todo({
-    text: req.body.text   // new doc in post with text being set to a specific value
+    text: req.body.text,   // new doc in post with text being set to a specific value
+    _creator: req.user._id
   });// end todo object
   todo.save().then((doc) => {  // save var todo 'ie the doc' to db. e can then send the doc to the server (save returns doc
     res.send(doc);             // we can then use response object to send ) to see it, we can see this reponse in postman  // if 200 it sent
@@ -27,19 +28,24 @@ app.post('/todos', (req, res) => {
   });// end then callback with 2 parameters
 });  // end App POST /todos
 
-app.get('/todos', (req, res) => {
-  Todo.find().then((todos) => {
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({
+    _creator: req.user._id
+  }).then((todos) => {
     res.send({todos});      // send docs to server, the RESPONSE
   }, (e) => {
     res.status(400).send(e);
   });// end then callback with 2 fxns
 });// end app GET /todos
 
-app.get('/todos/:id', (req, res) => { // error was todo in server.js vs tod in server.test.js
+app.get('/todos/:id',authenticate, (req, res) => { // error was todo in server.js vs tod in server.test.js
   var id = req.params.id;             // our input for a search request based on parameters
   if (!ObjectID.isValid(id)) // ObjectID is a mongoose object and isValid is its built-in method
     return res.status(404).send();// invalid id finish scope fxn early
-  Todo.findById(id).then((tod) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
+  Todo.findOne({
+    _id: id,
+    _creator: req.user._id
+    }).then((tod) => {  // so the id is of a valid form... Now is the URI not malformed? if so then its not 400
     if (!tod)
       return res.status(404).send();  // finish early
     // else
@@ -50,11 +56,14 @@ app.get('/todos/:id', (req, res) => { // error was todo in server.js vs tod in s
   });// end catch chained onto then
 });// end get todos/:id call
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id',authenticate, (req, res) => {
   var id = req.params.id;
   if (!ObjectID.isValid(id))
     return res.status(404).send();
-    Todo.findByIdAndRemove(id).then((tod) => {
+    Todo.findOneAndRemove({
+      _id: id,
+      _creator: req.user._id
+    }).then((tod) => {
       if (!tod)
         return res.status(404).send();
           res.send({tod});   // you forgot to send object use es6 syntav {tod}, that is why test fails
@@ -63,7 +72,7 @@ app.delete('/todos/:id', (req, res) => {
     });// end then call changed onto  findByIdAndRemove
 });// end delete call
 
-app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
+app.patch('/todos/:id',authenticate,(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
     var id = req.params.id; // get the id
     //The input request sent to server
     //https://lodash.com/docs/4.17.10#pick    // We can only explicitly interact with text and completed
@@ -76,7 +85,7 @@ app.patch('/todos/:id',(req,res) =>{   ///  error was Here!!!!! Thats why no con
     body.completed = false;
     body.completedAt = null;
         }// end else  Now we Actually update the value below...
-    Todo.findByIdAndUpdate(id,{$set: body}, {new: true}).then((tod) => {
+    Todo.findOneAndUpdate({_id: id, _creator: req.user._id},{$set: body}, {new: true}).then((tod) => {
       if (!tod)
         return res.status(404).send();
           res.send({tod});
