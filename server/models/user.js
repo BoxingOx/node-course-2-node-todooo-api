@@ -45,7 +45,7 @@ UserSchema.methods.toJSON = function(){           //we modified this toJSON meth
 UserSchema.methods.generateAuthToken = function(){ // we made this generateAuthTokens method
   var user = this;  // identifier , the object created in post calls this method to generate the authentication tokens
   var access = 'auth';
-  var token = jwt.sign({_id: user._id.toHexString(), access},'abc123').toString(); // avc123 is the secrect
+  var token = jwt.sign({_id: user._id.toHexString(), access},process.env.JWT_SECRECT).toString(); // avc123 is the secrect
   user.tokens = user.tokens.concat([{access,token}]);
   // user.tokens.push({access,token}); // es6 syntax
    user.save().then(() =>{  // save occurs in serverjs , works without preceding return
@@ -68,7 +68,7 @@ UserSchema.methods.removeToken = function (token){
      var User = this;
      var decoded;
      try {
-       decoded = jwt.verify(token, 'abc123'); // the token to decode and the secrect   // only jwt.verify and jwt. sign know about secrect
+       decoded = jwt.verify(token, process.env.JWT_SECRECT); // the token to decode and the secrect   // only jwt.verify and jwt. sign know about secrect
      } catch (e) {
        // return new Promise((resolve,reject) =>{
        //   reject();  // will be noticed by send call back in server.js
