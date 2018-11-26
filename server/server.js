@@ -56,20 +56,23 @@ app.get('/todos/:id',authenticate, (req, res) => { // error was todo in server.j
   });// end catch chained onto then
 });// end get todos/:id call
 
-app.delete('/todos/:id',authenticate, (req, res) => {
-  var id = req.params.id;
+app.delete('/todos/:id',authenticate, async (req, res) => {
+  const id = req.params.id;
   if (!ObjectID.isValid(id))
     return res.status(404).send();
-    Todo.findOneAndRemove({
-      _id: id,
-      _creator: req.user._id
-    }).then((tod) => {
-      if (!tod)
-        return res.status(404).send();
-          res.send({tod});   // you forgot to send object use es6 syntav {tod}, that is why test fails
-    }).catch((e) => {
-      res.status(400).send();  //malformed
-    });// end then call changed onto  findByIdAndRemove
+
+
+try{
+  const todo = await Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }); // end todo object
+  if (!todo)
+    return res.status(404).send();
+      res.send({todo});   // you forgot to send object use es6 syntav {tod}, that is why test fails
+    }catch(e){
+            res.status(400).send();  //malformed
+    }// end catch
 });// end delete call
 
 app.patch('/todos/:id',authenticate,(req,res) =>{   ///  error was Here!!!!! Thats why no console.log!!!
@@ -98,42 +101,40 @@ app.patch('/todos/:id',authenticate,(req,res) =>{   ///  error was Here!!!!! Tha
 
   //USERS
 
-app.post('/users', (req, res) => {
- var body = _.pick(req.body, ['email', 'password']) // these are required fields
- var user = new User(body);
- user.save().then(() => {  // save to db, before save, pre method hashes password
-  return  user.generateAuthToken(); // seems to work without return preceding it. After saved to db, a token based on id is quickily generated and saved to db
-   //res.send(doc);
-  }).then((token) =>{  // the token generated from generateAuthToken and passed to then
-   res.header('x-auth', token).send(user); // key/value pair custom header name is sent to server to view
-  }).catch((e) =>{
-     res.status(400).send(e);
-  })// end catch on then call
+app.post('/users', async (req, res) => {
+    try{
+     const body = _.pick(req.body, ['email', 'password']) // these are required fields
+     const user = new User(body);
+     await user.save(); // save to db, before save, pre method hashes password
+     const token = await user.generateAuthToken(); // the token generated from generateAuthToken and passed to then
+     res.header('x-auth', token).send(user); // key/value pair custom header name is sent to server to view
+   }catch(e){
+        res.status(400).send(e);
+   }// end catch
 });// end app POST USERS
 
 // POST /users/login {email, password}
-app.post('/users/login', (req, res) => {
-  var body = _.pick(req.body, ['email', 'password']);
-  // res.send(body);
- User.findByCredentials(body.email, body.password).then((user) =>{ // user is returned doc
-   return user.generateAuthToken().then((token) => {
-     res.header('x-auth', token).send(user);
-   });// end genAuthToken call
-     }).catch((e) =>{
-       res.status(400).send();
-     });// end findByCredentials call and then its 'then' and 'catch' chain calls
+app.post('/users/login', async (req, res) => {
+  try{
+    const body = _.pick(req.body, ['email', 'password']);
+    const user = await User.findByCredentials(body.email, body.password);
+    const token = await ser.generateAuthToken();
+    res.header('x-auth', token).send(user);
+  }catch(e){
+           res.status(400).send();
+  }// end catch
  });// end post to check login
 
 app.get('/users/me', authenticate, (req, res) =>{ // authenticate is called
   res.send(req.user); // we altered req.users in aux method
  });// end app GET users
 
- app.delete('/users/me/token', authenticate, (req, res) =>{
-   req.user.removeToken(req.token).then(() =>{
-     res.status(200).send();
-   }, () =>{
-    res.status(400).send();
-  });
+ app.delete('/users/me/token', authenticate, async  (req, res) =>{
+  try{ await req.user.removeToken(req.token);
+   res.status(200).send();
+   }catch(e){
+         res.status(400).send();
+   }// end catch
  });
 
 app.listen(port, () => {
